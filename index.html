@@ -574,7 +574,10 @@ footer.note{
     }
 
     var data = collectForm();
-    qs('submit-status').textContent = '저장 중...';
+    var saveBtn = qs('submit-btn');
+    if (saveBtn.disabled) return; // 중복 클릭 방지
+    saveBtn.disabled = true;
+    qs('submit-status').textContent = '저장 중... (처음엔 몇 초 걸릴 수 있어요)';
     try{
       var resp;
       if (currentId){
@@ -603,6 +606,8 @@ footer.note{
       refreshList();
     }catch(e){
       qs('submit-status').textContent = '저장에 실패했어요 (네트워크 오류). 잠시 후 다시 시도해주세요.';
+    }finally{
+      saveBtn.disabled = false;
     }
   }
   qs('submit-btn').addEventListener('click', submit);
@@ -716,6 +721,10 @@ footer.note{
   qs('edit-auth-confirm').addEventListener('click', async function(){
     if (!currentDetailId || !currentDetailData) return;
     var entered = qs('edit-auth-pw').value;
+    var confirmBtn = qs('edit-auth-confirm');
+    if (confirmBtn.disabled) return; // 중복 클릭 방지
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '확인 중...';
     qs('edit-auth-error').textContent = '';
     try{
       var resp = await apiPost({ action: 'verify', id: currentDetailId, password: entered });
@@ -726,6 +735,9 @@ footer.note{
     }catch(e){
       qs('edit-auth-error').textContent = '확인에 실패했어요 (네트워크 오류). 다시 시도해주세요.';
       return;
+    }finally{
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = '확인';
     }
     currentId = currentDetailId;
     loadedPassword = entered;
