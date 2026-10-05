@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>딸깍 기획서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* layout: terminal-prompt worksheet with two tabs — write (card-grouped fields) and a shared submissions list with a per-entry read-only detail view */
+  --bg:#faf8f2;
+  --surface:#ffffff;
+  --surface-alt:#f2efe4;
+  --fg:#1f251f;
+  --muted:#6c7566;
+  --accent:#2f7d52;
+  --accent-fg:#ffffff;
+  --border:#ddd5c0;
+  --shadow:0 1px 2px rgba(31,37,31,.05);
+  --danger:#b3432b;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#12140f;
+    --surface:#191c15;
+    --surface-alt:#20241a;
+    --fg:#e9ece2;
+    --muted:#97a08c;
+    --accent:#5fcf8f;
+    --accent-fg:#0d140d;
+    --border:#2f3527;
+    --shadow:0 1px 2px rgba(0,0,0,.3);
+    --danger:#e8886f;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12140f;
+  --surface:#191c15;
+  --surface-alt:#20241a;
+  --fg:#e9ece2;
+  --muted:#97a08c;
+  --accent:#5fcf8f;
+  --accent-fg:#0d140d;
+  --border:#2f3527;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+  --danger:#e8886f;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;}
+body{
+  background:var(--bg);
+  color:var(--fg);
+  font-family:'Noto Sans KR',system-ui,-apple-system,sans-serif;
+  padding-inline:16px;
+  padding-block:40px 64px;
+}
+.mono{font-family:'JetBrains Mono','Noto Sans KR',monospace;}
+
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:24px;}
+
+.masthead{display:flex;flex-direction:column;gap:10px;}
+.eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;
+  letter-spacing:.08em;
+  color:var(--accent);
+  display:flex;align-items:center;gap:8px;
+}
+.eyebrow::before{content:"$";opacity:.7;}
+h1{
+  font-size:clamp(26px,5vw,34px);
+  margin:0;
+  text-wrap:balance;
+  letter-spacing:-.01em;
+}
+.sub{
+  color:var(--muted);
+  font-size:14.5px;
+  line-height:1.6;
+  max-width:62ch;
+}
+.sub b{color:var(--fg);font-weight:600;}
+
+.tabs{display:flex;gap:18px;border-bottom:1px solid var(--border);}
+.tab{
+  font-family:'JetBrains Mono',monospace;
+  font-size:13.5px;
+  background:transparent;
+  border:none;
+  border-bottom:2px solid transparent;
+  color:var(--muted);
+  padding:10px 2px;
+  cursor:pointer;
+  display:flex;align-items:center;gap:6px;
+}
+.tab.active{color:var(--fg);border-color:var(--accent);}
+.tab:disabled{opacity:.45;cursor:not-allowed;}
+.badge{
+  background:var(--accent);
+  color:var(--accent-fg);
+  font-size:11px;
+  border-radius:999px;
+  padding:1px 7px;
+  font-family:'JetBrains Mono',monospace;
+}
+
+.meta-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:14px 16px;
+  box-shadow:var(--shadow);
+}
+@media (max-width:480px){.meta-row{grid-template-columns:1fr;}}
+
+.field{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.field label{font-size:13.5px;font-weight:600;}
+.field .hint{font-size:12.5px;color:var(--muted);line-height:1.5;margin:0;}
+input[type="text"],input[type="password"],textarea{
+  font:inherit;
+  font-size:14px;
+  color:var(--fg);
+  background:var(--surface-alt);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:9px 11px;
+  width:100%;
+  resize:vertical;
+  font-family:'Noto Sans KR',system-ui,sans-serif;
+}
+textarea{min-height:58px;line-height:1.5;}
+input[type="text"]:focus,input[type="password"]:focus,textarea:focus{
+  outline:2px solid var(--accent);
+  outline-offset:1px;
+}
+input[type="text"]::placeholder,input[type="password"]::placeholder,textarea::placeholder{color:var(--muted);opacity:.75;}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:20px 20px 22px;
+  box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:16px;
+}
+.card-head{display:flex;flex-direction:column;gap:2px;}
+.card-head .eyebrow{font-size:12px;}
+.card-head h2{font-size:18px;margin:0;letter-spacing:-.01em;}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media (max-width:480px){.grid2{grid-template-columns:1fr;}}
+
+.mech-row{display:flex;flex-direction:column;gap:10px;}
+
+.optional-tag{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--muted);
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:1px 8px;
+  width:fit-content;
+}
+
+.actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.btn{
+  font-family:'JetBrains Mono',monospace;
+  font-size:13.5px;
+  font-weight:500;
+  color:var(--fg);
+  background:var(--surface-alt);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:10px 16px;
+  cursor:pointer;
+}
+.btn:hover{border-color:var(--accent);}
+.btn:active{filter:brightness(.97);}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);}
+.btn.primary:hover{filter:brightness(1.05);}
+.btn.linklike{background:transparent;border:none;padding:4px 0;text-decoration:underline;color:var(--muted);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.toast{
+  font-size:13px;
+  color:var(--muted);
+  opacity:0;
+  transition:opacity .2s ease;
+}
+.toast.show{opacity:1;}
+.status-text{font-size:12.5px;color:var(--muted);min-height:1.4em;}
+.error-text{font-size:12.5px;color:var(--danger);font-weight:600;}
+
+.list-cards{display:flex;flex-direction:column;gap:10px;}
+.list-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:14px 16px;
+  cursor:pointer;
+  display:flex;flex-direction:column;gap:4px;
+  text-align:left;
+  width:100%;
+}
+.list-card:hover{border-color:var(--accent);}
+.list-card .lc-top{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.list-card h3{margin:0;font-size:16px;}
+.list-card .lc-meta{font-size:12.5px;color:var(--muted);}
+
+.kv{display:flex;flex-direction:column;gap:3px;}
+.kv .k{font-size:12.5px;font-weight:600;color:var(--muted);}
+.kv .v{margin:0;font-size:14px;line-height:1.6;white-space:pre-wrap;}
+
+footer.note{
+  font-size:12.5px;
+  color:var(--muted);
+  border-top:1px solid var(--border);
+  padding-top:16px;
+  line-height:1.7;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .btn, .toast{transition:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="eyebrow">unity-cli-study / week-01</div>
+    <h1>딸깍 기획서</h1>
+    <p class="sub">1주차 공통 양식입니다. 각 칸은 단문형은 1줄, 장문형은 2줄 이상으로 채우고 <b>저장하기</b>를 누르면 "제출 현황" 탭에서 모두가 서로의 기획서를 바로 볼 수 있습니다. 같은 브라우저로 다시 들어오면 자동으로 이어서 수정되고, 다른 기기에서 이어서 수정하려면 저장할 때 정한 비밀번호가 필요합니다.</p>
+  </div>
+
+  <div class="tabs">
+    <button type="button" class="tab active" id="tab-form">✍️ 작성하기</button>
+    <button type="button" class="tab" id="tab-list">📋 제출 현황 <span class="badge" id="count-badge" hidden>0</span></button>
+  </div>
+
+  <section id="panel-form" style="display:flex;flex-direction:column;gap:24px;">
+
+    <div class="meta-row">
+      <div class="field">
+        <label for="author">작성자</label>
+        <input type="text" id="author" placeholder="예: 홍길동">
+      </div>
+      <div class="field">
+        <label for="editPassword">비밀번호</label>
+        <p class="hint">새로 저장할 때 설정하세요. 다른 기기에서 이어서 수정할 때 필요해요. (수정 저장 시 비워두면 기존 비밀번호 유지)</p>
+        <input type="password" id="editPassword" placeholder="예: 1234">
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="card-head">
+        <span class="eyebrow">01 identity</span>
+        <h2>게임 정체성</h2>
+      </div>
+
+      <div class="field">
+        <label for="title">제목 (가제)</label>
+        <input type="text" id="title" placeholder="예: 좀비 탈출 러너">
+      </div>
+
+      <div class="field">
+        <label for="genre">장르</label>
+        <input type="text" id="genre" placeholder="예: 2D 횡스크롤 러너">
+      </div>
+
+      <div class="field">
+        <label for="logline">한 줄 로그라인</label>
+        <p class="hint">"이 게임은 ___ 게임이다" 형태로 한 문장이면 충분해요.</p>
+        <textarea id="logline" placeholder="예: 이 게임은 좀비를 피해 끝까지 달리는 러너 게임이다."></textarea>
+      </div>
+
+      <div class="field">
+        <label for="reference">참고 레퍼런스 게임</label>
+        <p class="hint">1개 이상, 어떤 점이 비슷한지도 한 줄로 적어주세요.</p>
+        <textarea id="reference" placeholder="예: 쿠키런 — 자동 달리기 + 장애물 점프 구조가 비슷함"></textarea>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <span class="eyebrow">02 play</span>
+        <h2>플레이 정의</h2>
+      </div>
+
+      <div class="field">
+        <label for="coreloop">핵심 재미 / 코어 루프</label>
+        <p class="hint">플레이어가 반복하는 행동을 1~3단계로 적어주세요.</p>
+        <textarea id="coreloop" placeholder="예: 1) 자동으로 달린다 → 2) 장애물에 맞춰 점프/슬라이드 → 3) 거리만큼 점수 획득"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="controls">조작 방법</label>
+        <p class="hint">플레이어가 쓸 수 있는 입력을 전부 적어주세요.</p>
+        <textarea id="controls" placeholder="예: 스페이스바 = 점프, 왼쪽/오른쪽 화살표 = 이동"></textarea>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label for="win">승리 조건</label>
+          <input type="text" id="win" placeholder="예: 목표 거리 도달">
+        </div>
+        <div class="field">
+          <label for="lose">패배 / 종료 조건</label>
+          <input type="text" id="lose" placeholder="예: 장애물에 3번 부딪히면 게임오버">
+        </div>
+      </div>
+
+      <div class="mech-row">
+        <label class="field" style="gap:4px;">
+          <span style="font-size:13.5px;font-weight:600;">핵심 메커니즘</span>
+          <span class="hint">최대 2개까지만 적는 걸 권장해요. 욕심내면 1주차 안에 못 끝나요.</span>
+        </label>
+        <textarea id="mechanic1" placeholder="메커니즘 1 — 예: 점프 중 2단 점프 가능"></textarea>
+        <textarea id="mechanic2" placeholder="메커니즘 2 (선택) — 예: 아이템으로 무적 3초"></textarea>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <span class="eyebrow">03 scope</span>
+        <h2>구성 및 스코프</h2>
+      </div>
+
+      <div class="field">
+        <label for="dimension">2D / 3D</label>
+        <input type="text" id="dimension" placeholder="예: 2D">
+      </div>
+
+      <div class="field">
+        <label for="scenes">화면(씬) 구성</label>
+        <p class="hint">최소 흐름만 순서대로 적어주세요.</p>
+        <textarea id="scenes" placeholder="예: 타이틀 화면 → 플레이 화면 → 결과(클리어/게임오버) 화면"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="done">완성 기준 (Definition of Done)</label>
+        <p class="hint">어디까지 되면 "완성"인지 구체적으로. 검사 기준이 됩니다.</p>
+        <textarea id="done" placeholder="예: 타이틀에서 시작 → 플레이 → 게임오버/클리어까지 끊김 없이 플레이 가능한 빌드 1개"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="outscope">제한 범위</label>
+        <p class="hint">이번 4주 프로젝트에서 어느 정도 선까지 개발할 것인지 적어주세요.</p>
+        <textarea id="outscope" placeholder="예: 사운드 다중 트랙, 멀티플레이, 스테이지 2개 이상은 이번 4주 안에는 포함하지 않는다"></textarea>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <span class="eyebrow">04 handoff</span>
+        <h2>AI 에이전트 전달용 요약 프롬프트</h2>
+        <span class="optional-tag">선택</span>
+      </div>
+      <p class="hint" style="margin:0;">위 내용을 바탕으로 AI 에이전트에게 처음 건넬 명령문을 1~2문단으로 미리 정리해보세요.</p>
+      <textarea id="aiprompt" style="min-height:96px;" placeholder="예: 2D 횡스크롤 러너 게임을 Unity CLI로 만들 거야. 플레이어는 스페이스바로 점프하고..."></textarea>
+    </section>
+
+    <div class="actions">
+      <button type="button" class="btn primary" id="submit-btn">저장하기</button>
+      <button type="button" class="btn" id="copy-top">마크다운으로 복사</button>
+      <button type="button" class="btn linklike" id="new-team-btn">새로 작성 (초기화)</button>
+      <span class="toast" id="toast-top"></span>
+    </div>
+    <div class="status-text" id="submit-status"></div>
+  </section>
+
+  <section id="panel-list" hidden style="display:flex;flex-direction:column;gap:16px;">
+    <p class="hint" id="list-empty" style="margin:0;">아직 제출된 기획서가 없어요. 작성하기 탭에서 먼저 제출해보세요.</p>
+    <div class="list-cards" id="list-cards"></div>
+
+    <div id="detail-view" hidden style="display:flex;flex-direction:column;gap:16px;">
+      <button type="button" class="btn linklike" id="back-to-list">← 목록으로</button>
+      <div id="detail-content" style="display:flex;flex-direction:column;gap:16px;"></div>
+      <div class="actions">
+        <button type="button" class="btn primary" id="edit-this-btn">이 항목 수정하기</button>
+        <button type="button" class="btn" id="copy-link">이 제출 링크 복사</button>
+        <span class="toast" id="toast-link"></span>
+      </div>
+      <div class="actions" id="edit-auth" hidden>
+        <input type="password" id="edit-auth-pw" placeholder="비밀번호 입력">
+        <button type="button" class="btn primary" id="edit-auth-confirm">확인</button>
+        <button type="button" class="btn linklike" id="edit-auth-cancel">취소</button>
+        <span class="error-text" id="edit-auth-error"></span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="note">
+    딸-깍 스터디 1주차 공통 기획서 양식 · 완성 기준과 제한 범위는 비워두지 마세요 — 이 두 칸이 검사 때 가장 중요합니다.
+  </footer>
+</div>
+
+<script>
+(function(){
+  // ====== 여기만 바꾸면 됩니다 ======
+  // Google Apps Script 배포 후 생긴 "웹 앱 URL"을 아래 따옴표 안에 붙여넣으세요.
+  var API_URL = 'https://script.google.com/macros/s/AKfycbx3jxXN0iCiv3VR0HkPubW33E3I7yp1CN45MHpjGk6dTYRFX0UFTTpBjit35Xxua07ZbA/exec';
+  // ================================
+
+  var FIELD_IDS = ['author','title','genre','logline','reference','coreloop','controls','win','lose','mechanic1','mechanic2','dimension','scenes','done','outscope','aiprompt'];
+  var LS_KEY = 'ddalkkak_submission_id';
+  var LS_PW_KEY = 'ddalkkak_submission_pw';
+  var currentId = null;
+  var loadedPassword = null;
+  var submissions = [];
+  var currentDetailId = null;
+  var currentDetailData = null;
+
+  function qs(id){ return document.getElementById(id); }
+  function safeLS(fn){ try{ return fn(); } catch(e){ return null; } }
+  function apiUrlConfigured(){ return !!API_URL && API_URL.indexOf('PASTE_YOUR') === -1; }
+
+  function apiGet(params){
+    var qsStr = Object.keys(params).map(function(k){
+      return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    }).join('&');
+    return fetch(API_URL + '?' + qsStr, { method: 'GET' }).then(function(r){ return r.json(); });
+  }
+  function apiPost(payload){
+    return fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids a CORS preflight against Apps Script
+      body: JSON.stringify(payload)
+    }).then(function(r){ return r.json(); });
+  }
+
+  function collectForm(){
+    var obj = {};
+    FIELD_IDS.forEach(function(id){
+      var el = qs(id);
+      obj[id] = el ? el.value.trim() : '';
+    });
+    return obj;
+  }
+
+  function fillForm(data){
+    FIELD_IDS.forEach(function(id){
+      var el = qs(id);
+      if (el) el.value = (data && data[id]) ? data[id] : '';
+    });
+  }
+
+  function clearForm(){
+    FIELD_IDS.forEach(function(id){ var el = qs(id); if (el) el.value = ''; });
+  }
+
+  // ---- markdown export (works even without the backend configured) ----
+  function val(id){
+    var el = qs(id);
+    return (el && el.value.trim()) ? el.value.trim() : '(미작성)';
+  }
+  function buildMarkdown(){
+    return [
+      '# ' + val('title') + ' — 1주차 기획서',
+      '작성자: ' + val('author'),
+      '',
+      '## 1. 게임 정체성',
+      '- 제목(가제): ' + val('title'),
+      '- 장르: ' + val('genre'),
+      '- 한 줄 로그라인: ' + val('logline'),
+      '- 참고 레퍼런스: ' + val('reference'),
+      '',
+      '## 2. 플레이 정의',
+      '- 핵심 재미/코어 루프: ' + val('coreloop'),
+      '- 조작 방법: ' + val('controls'),
+      '- 승리 조건: ' + val('win'),
+      '- 패배/종료 조건: ' + val('lose'),
+      '- 핵심 메커니즘 1: ' + val('mechanic1'),
+      '- 핵심 메커니즘 2: ' + val('mechanic2'),
+      '',
+      '## 3. 구성 및 스코프',
+      '- 2D/3D: ' + val('dimension'),
+      '- 화면(씬) 구성: ' + val('scenes'),
+      '- 완성 기준: ' + val('done'),
+      '- 제한 범위: ' + val('outscope'),
+      '',
+      '## 4. AI 에이전트 전달용 요약 프롬프트',
+      val('aiprompt')
+    ].join('\n');
+  }
+
+  function flashToast(toastEl){
+    if (!toastEl) return;
+    toastEl.textContent = toastEl.textContent || '복사됐어요';
+    toastEl.classList.add('show');
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(function(){ toastEl.classList.remove('show'); }, 2200);
+  }
+  function copyText(text){
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text);
+    return Promise.reject(new Error('no clipboard api'));
+  }
+  function fallbackCopy(text){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function wireCopyButton(btnId, toastId, textFn){
+    var btn = qs(btnId);
+    var toast = qs(toastId);
+    if (!btn) return;
+    btn.addEventListener('click', function(){
+      var text = textFn();
+      copyText(text).catch(function(){ fallbackCopy(text); }).then(function(){
+        toast.textContent = '복사됐어요';
+        flashToast(toast);
+      });
+    });
+  }
+  wireCopyButton('copy-top', 'toast-top', buildMarkdown);
+  wireCopyButton('copy-link', 'toast-link', function(){ return location.href; });
+
+  // ---- tabs ----
+  function showTab(which){
+    qs('panel-form').hidden = which !== 'form';
+    qs('panel-list').hidden = which !== 'list';
+    qs('tab-form').classList.toggle('active', which === 'form');
+    qs('tab-list').classList.toggle('active', which === 'list');
+  }
+  qs('tab-form').addEventListener('click', function(){ showTab('form'); });
+  qs('tab-list').addEventListener('click', function(){
+    showTab('list');
+    qs('detail-view').hidden = true;
+    qs('list-cards').hidden = false;
+    history.replaceState(null, '', location.pathname + location.search);
+    refreshList();
+  });
+
+  qs('new-team-btn').addEventListener('click', function(){
+    currentId = null;
+    loadedPassword = null;
+    safeLS(function(){ localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_PW_KEY); });
+    clearForm();
+    qs('editPassword').value = '';
+    qs('submit-status').textContent = '새로 작성 중이에요. 저장하면 새 비밀번호를 설정해야 해요.';
+  });
+
+  // ---- submit (save) ----
+  async function submit(){
+    if (!apiUrlConfigured()){
+      qs('submit-status').textContent = '백엔드 주소가 아직 설정되지 않았어요. "마크다운으로 복사"로 내보내 전달해주세요.';
+      return;
+    }
+    var pwInput = qs('editPassword');
+    var enteredPw = pwInput ? pwInput.value.trim() : '';
+    var finalPw;
+    if (currentId){
+      finalPw = enteredPw ? enteredPw : (loadedPassword || '');
+    } else {
+      if (!enteredPw){
+        qs('submit-status').textContent = '비밀번호를 입력해주세요 — 다른 기기에서 이어서 수정할 때 필요해요.';
+        return;
+      }
+      finalPw = enteredPw;
+    }
+
+    var data = collectForm();
+    qs('submit-status').textContent = '저장 중...';
+    try{
+      var resp;
+      if (currentId){
+        resp = await apiPost({ action: 'update', id: currentId, password: finalPw, data: data });
+        if (!resp || !resp.ok){
+          qs('submit-status').textContent = (resp && resp.error === 'bad_password')
+            ? '비밀번호가 올바르지 않아요. 비밀번호 칸에 다시 입력하고 저장해주세요.'
+            : '저장에 실패했어요. 잠시 후 다시 시도해주세요.';
+          return;
+        }
+      } else {
+        resp = await apiPost({ action: 'create', password: finalPw, data: data });
+        if (!resp || !resp.ok){
+          qs('submit-status').textContent = '저장에 실패했어요. 잠시 후 다시 시도해주세요.';
+          return;
+        }
+        currentId = resp.id;
+      }
+      loadedPassword = finalPw;
+      safeLS(function(){
+        localStorage.setItem(LS_KEY, currentId);
+        localStorage.setItem(LS_PW_KEY, finalPw);
+      });
+      if (pwInput) pwInput.value = '';
+      qs('submit-status').textContent = '저장 완료 — ' + new Date().toLocaleTimeString('ko-KR') + ' (제출 현황 탭에서 확인 가능)';
+      refreshList();
+    }catch(e){
+      qs('submit-status').textContent = '저장에 실패했어요 (네트워크 오류). 잠시 후 다시 시도해주세요.';
+    }
+  }
+  qs('submit-btn').addEventListener('click', submit);
+
+  // ---- list + detail ----
+  var SECTIONS = [
+    {eyebrow:'01 identity', title:'게임 정체성', rows:[['제목(가제)','title'],['장르','genre'],['한 줄 로그라인','logline'],['참고 레퍼런스','reference']]},
+    {eyebrow:'02 play', title:'플레이 정의', rows:[['핵심 재미/코어 루프','coreloop'],['조작 방법','controls'],['승리 조건','win'],['패배/종료 조건','lose'],['핵심 메커니즘 1','mechanic1'],['핵심 메커니즘 2','mechanic2']]},
+    {eyebrow:'03 scope', title:'구성 및 스코프', rows:[['2D/3D','dimension'],['화면(씬) 구성','scenes'],['완성 기준','done'],['제한 범위','outscope']]},
+    {eyebrow:'04 handoff', title:'AI 전달용 프롬프트', rows:[['프롬프트 초안','aiprompt']]}
+  ];
+
+  function renderList(){
+    var badge = qs('count-badge');
+    badge.hidden = submissions.length === 0;
+    badge.textContent = submissions.length;
+
+    var wrap = qs('list-cards');
+    wrap.innerHTML = '';
+    qs('list-empty').hidden = submissions.length !== 0;
+
+    submissions.forEach(function(item){
+      var d = item.data;
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'list-card';
+
+      var top = document.createElement('div'); top.className = 'lc-top';
+      var authorSpan = document.createElement('span'); authorSpan.textContent = d.author || '(작성자 미입력)';
+      var timeSpan = document.createElement('span'); timeSpan.textContent = d.updatedAt ? new Date(d.updatedAt).toLocaleString('ko-KR') : '';
+      top.appendChild(authorSpan); top.appendChild(timeSpan);
+
+      var h3 = document.createElement('h3'); h3.textContent = d.title || '(제목 미입력)';
+      var meta = document.createElement('div'); meta.className = 'lc-meta';
+      meta.textContent = d.genre || '';
+
+      card.appendChild(top); card.appendChild(h3); card.appendChild(meta);
+      card.addEventListener('click', function(){ openDetail(item.id, d); });
+      wrap.appendChild(card);
+    });
+
+    var hash = location.hash.replace('#', '');
+    if (hash){
+      var found = submissions.filter(function(s){ return s.id === hash; })[0];
+      if (found) openDetail(found.id, found.data, true);
+    }
+  }
+
+  function refreshList(){
+    if (!apiUrlConfigured()) return;
+    apiGet({ action: 'list' }).then(function(resp){
+      if (!resp || !resp.ok) return;
+      submissions = (resp.rows || []).map(function(row){ return { id: row.id, data: row }; });
+      renderList();
+    }).catch(function(){ /* network hiccup — keep showing the last good list */ });
+  }
+
+  function openDetail(id, data, fromHash){
+    currentDetailId = id;
+    currentDetailData = data;
+    qs('list-cards').hidden = true;
+    var dv = qs('detail-view'); dv.hidden = false;
+    var content = qs('detail-content'); content.innerHTML = '';
+
+    var head = document.createElement('div'); head.className = 'masthead';
+    var eyebrow = document.createElement('div'); eyebrow.className = 'eyebrow'; eyebrow.textContent = 'submission / ' + id;
+    var h1 = document.createElement('h1'); h1.style.fontSize = '24px'; h1.textContent = data.title || '(제목 미입력)';
+    var sub = document.createElement('p'); sub.className = 'sub';
+    sub.textContent = (data.author ? ('작성자 ' + data.author + ' · ') : '') + (data.updatedAt ? new Date(data.updatedAt).toLocaleString('ko-KR') : '');
+    head.appendChild(eyebrow); head.appendChild(h1); head.appendChild(sub);
+    content.appendChild(head);
+
+    SECTIONS.forEach(function(sec){
+      var card = document.createElement('section'); card.className = 'card';
+      var ch = document.createElement('div'); ch.className = 'card-head';
+      var eb = document.createElement('span'); eb.className = 'eyebrow'; eb.textContent = sec.eyebrow;
+      var h2 = document.createElement('h2'); h2.textContent = sec.title;
+      ch.appendChild(eb); ch.appendChild(h2);
+      card.appendChild(ch);
+      sec.rows.forEach(function(r){
+        var kv = document.createElement('div'); kv.className = 'kv';
+        var k = document.createElement('div'); k.className = 'k'; k.textContent = r[0];
+        var v = document.createElement('p'); v.className = 'v'; v.textContent = data[r[1]] || '(미작성)';
+        kv.appendChild(k); kv.appendChild(v);
+        card.appendChild(kv);
+      });
+      content.appendChild(card);
+    });
+
+    if (!fromHash) history.replaceState(null, '', '#' + id);
+  }
+
+  qs('back-to-list').addEventListener('click', function(){
+    qs('detail-view').hidden = true;
+    qs('list-cards').hidden = false;
+    history.replaceState(null, '', location.pathname + location.search);
+  });
+
+  qs('edit-this-btn').addEventListener('click', function(){
+    qs('edit-auth').hidden = false;
+    qs('edit-auth-pw').value = '';
+    qs('edit-auth-error').textContent = '';
+    qs('edit-auth-pw').focus();
+  });
+  qs('edit-auth-cancel').addEventListener('click', function(){
+    qs('edit-auth').hidden = true;
+  });
+  qs('edit-auth-pw').addEventListener('keydown', function(e){
+    if (e.key === 'Enter'){ e.preventDefault(); qs('edit-auth-confirm').click(); }
+  });
+  qs('edit-auth-confirm').addEventListener('click', async function(){
+    if (!currentDetailId || !currentDetailData) return;
+    var entered = qs('edit-auth-pw').value;
+    qs('edit-auth-error').textContent = '';
+    try{
+      var resp = await apiPost({ action: 'verify', id: currentDetailId, password: entered });
+      if (!resp || !resp.ok){
+        qs('edit-auth-error').textContent = '비밀번호가 올바르지 않아요.';
+        return;
+      }
+    }catch(e){
+      qs('edit-auth-error').textContent = '확인에 실패했어요 (네트워크 오류). 다시 시도해주세요.';
+      return;
+    }
+    currentId = currentDetailId;
+    loadedPassword = entered;
+    safeLS(function(){
+      localStorage.setItem(LS_KEY, currentId);
+      localStorage.setItem(LS_PW_KEY, entered);
+    });
+    fillForm(currentDetailData);
+    qs('editPassword').value = '';
+    qs('edit-auth').hidden = true;
+    showTab('form');
+    qs('submit-status').textContent = '이 항목을 불러와 수정 중이에요. 저장하면 같은 항목이 업데이트돼요.';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ---- init ----
+  async function init(){
+    if (!apiUrlConfigured()){
+      qs('submit-status').textContent = '백엔드 주소가 설정되지 않았어요. 이 파일 상단의 API_URL 값을 Apps Script 배포 URL로 바꿔주세요.';
+      qs('tab-list').disabled = true;
+      return;
+    }
+
+    currentId = safeLS(function(){ return localStorage.getItem(LS_KEY); });
+    loadedPassword = safeLS(function(){ return localStorage.getItem(LS_PW_KEY); }) || null;
+
+    if (currentId){
+      try{
+        var resp = await apiGet({ action: 'get', id: currentId });
+        if (resp && resp.ok && resp.row){
+          fillForm(resp.row);
+          qs('submit-status').textContent = '이 브라우저에 저장된 내 제출을 불러왔어요. 수정 후 다시 저장하면 덮어써요.';
+        } else {
+          currentId = null;
+          loadedPassword = null;
+          safeLS(function(){ localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_PW_KEY); });
+        }
+      }catch(e){ /* network hiccup — keep local state, user can retry */ }
+    }
+
+    refreshList();
+    setInterval(refreshList, 20000);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
